@@ -250,7 +250,7 @@ pursued in favor of finishing all core modules within the time available.
 
 - No automated test suite (unit/integration tests) was added given the 48-hour window —
   manual verification was done via the Postman collection.
-- Invoice generation and PDF export (listed as a bonus) were not implemented.
+- - Challan PDF export is implemented (bonus feature). Full invoice generation (separate from challan) was not built.I
 - No password-reset flow; only seeded logins exist. User management (creating new
   employee accounts through the UI) is not built — users are currently seeded directly.
 - Stock movement log and challan history views are basic tables without CSV export.
@@ -259,22 +259,16 @@ pursued in favor of finishing all core modules within the time available.
 - AWS deployment was not pursued (see Deployment Guide above) — the app is deployment-
   ready for Render/Vercel/Supabase instead, per the brief's accepted alternative.
 ## Live Deployment
+- Frontend: https://erp-crm-operations-portal.vercel.app
+- Backend API: https://erp-crm-backend.onrender.com
+- GitHub Repo: https://github.com/Chandankumar3050/erp-crm-operations-portal
 
-- **Frontend:** https://erp-crm-operations-portal.vercel.app
-- **Backend API:** https://erp-crm-backend.onrender.com
-- **GitHub Repo:** https://github.com/Chandankumar3050/erp-crm-operations-portal
+## Test Credentials (all roles, password: Password@123)
+- Admin: admin@erp.test
+- Sales: sales@erp.test
+- Warehouse: warehouse@erp.test
+- Accounts: accounts@erp.test
 
-## Test Credentials
-
-All roles use password: `Password@123`
-
-| Role | Email |
-|---|---|
-| Admin | admin@erp.test |
-| Sales | sales@erp.test |
-| Warehouse | warehouse@erp.test |
-| Accounts | accounts@erp.test |
-
-## Deployment Notes
-
-- Backend hosted on Render (Free tier) — spins down after 15 minutes of inactivity. First request after inactivity may take 30–50 seconds to respond while the server spins back up.
+## Note
+Backend hosted on Render free tier — spins down after 15 min inactivity, 
+first request may take 30-50 seconds.
