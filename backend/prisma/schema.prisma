@@ -1,0 +1,173 @@
+// Prisma schema for Mini ERP + CRM Operations Portal
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  SALES
+  WAREHOUSE
+  ACCOUNTS
+}
+
+enum CustomerType {
+  RETAIL
+  WHOLESALE
+  DISTRIBUTORvv
+}
+
+enum CustomerStatus {
+  LEAD
+  ACTIVE
+  INACTIVE
+}
+
+enum MovementType {
+  IN
+  OUT
+}
+
+enum ChallanStatus {
+  DRAFT
+  CONFIRMED
+  CANCELLED
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role
+  createdAt    DateTime @default(now())
+
+  customersCreated Customer[]      @relation("CustomerCreatedBy")
+  followUpNotes    FollowUpNote[]
+  productsCreated  Product[]
+  stockMovements   StockMovement[]
+  challansCreated  Challan[]
+
+  @@map("users")
+}
+
+model Customer {
+  id           String         @id @default(uuid())
+  name         String
+  mobile       String
+  email        String?
+  businessName String?
+  gstNumber    String?
+  customerType CustomerType
+  address      String?
+  status       CustomerStatus @default(LEAD)
+  followUpDate DateTime?
+  notes        String?
+
+  createdById String
+  createdBy   User   @relation("CustomerCreatedBy", fields: [createdById], references: [id])
+
+  followUpNotes FollowUpNote[]
+  challans      Challan[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([customerType])
+  @@map("customers")
+}
+
+model FollowUpNote {
+  id         String   @id @default(uuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  note       String
+  createdById String
+  createdBy  User     @relation(fields: [createdById], references: [id])
+  createdAt  DateTime @default(now())
+
+  @@map("follow_up_notes")
+}
+
+model Product {
+  id            String   @id @default(uuid())
+  name          String
+  sku           String   @unique
+  category      String?
+  unitPrice     Decimal  @db.Decimal(12, 2)
+  currentStock  Int      @default(0)
+  minStockAlert Int      @default(0)
+  location      String?
+
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id])
+
+  stockMovements StockMovement[]
+  challanItems   ChallanItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sku])
+  @@map("products")
+}
+
+model StockMovement {
+  id              String       @id @default(uuid())
+  productId       String
+  product         Product      @relation(fields: [productId], references: [id])
+  quantityChanged Int
+  movementType    MovementType
+  reason          String
+  createdById     String
+  createdBy       User         @relation(fields: [createdById], references: [id])
+  createdAt       DateTime     @default(now())
+
+  @@index([productId])
+  @@map("stock_movements")
+}
+
+model Challan {
+  id             String        @id @default(uuid())
+  challanNumber  String        @unique
+  customerId     String
+  customer       Customer      @relation(fields: [customerId], references: [id])
+  totalQuantity  Int           @default(0)
+  status         ChallanStatus @default(DRAFT)
+
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id])
+
+  items ChallanItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([customerId])
+  @@map("challans")
+}
+
+// Stores a PRODUCT SNAPSHOT (name, sku, price) at the time of sale,
+// not just a foreign key, so historical challans stay accurate even
+// if the product is later renamed or repriced.
+model ChallanItem {
+  id                String  @id @default(uuid())
+  challanId         String
+  challan           Challan @relation(fields: [challanId], references: [id], onDelete: Cascade)
+  productId         String
+  product           Product @relation(fields: [productId], references: [id])
+  productNameSnapshot String
+  productSkuSnapshot  String
+  unitPriceSnapshot   Decimal @db.Decimal(12, 2)
+  quantity            Int
+
+  @@map("challan_items")
+}
