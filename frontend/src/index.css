@@ -91,6 +91,9 @@ a:hover { text-decoration: underline; }
   letter-spacing: 0.01em;
   border-left: 2px solid transparent;
   transition: background 0.12s ease, color 0.12s ease;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 .sidebar nav a:hover { background: rgba(255, 255, 255, 0.06); text-decoration: none; color: #fff; }
 .sidebar nav a.active {
@@ -99,6 +102,8 @@ a:hover { text-decoration: underline; }
   border-left: 2px solid var(--amber-400);
   font-weight: 600;
 }
+.nav-icon { display: inline-flex; flex-shrink: 0; opacity: 0.85; }
+.sidebar nav a.active .nav-icon { opacity: 1; color: var(--amber-400); }
 .user-box {
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   padding-top: 16px;
@@ -124,6 +129,10 @@ a:hover { text-decoration: underline; }
   font-family: var(--font-sans);
   font-size: 13px;
   transition: background 0.12s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 .user-box button:hover { background: rgba(255, 255, 255, 0.12); }
 
