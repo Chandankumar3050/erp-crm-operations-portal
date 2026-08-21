@@ -5,9 +5,7 @@ import helmet from "helmet";
 import morgan from "morgan";
 
 import authRoutes from "./routes/auth.routes";
-import customerRoutes from "./routes/customer.routes";
-import productRoutes from "./routes/product.routes";
-import challanRoutes from "./routes/challan.routes";
+import inventoryRoutes from "./routes/inventory.routes";
 import { errorHandler } from "./middleware/errorHandler";
 
 const app = express();
@@ -20,9 +18,7 @@ app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
 app.get("/health", (_req, res) => res.json({ status: "ok", timestamp: new Date().toISOString() }));
 
 app.use("/api/auth", authRoutes);
-app.use("/api/customers", customerRoutes);
-app.use("/api/products", productRoutes);
-app.use("/api/challans", challanRoutes);
+app.use("/api/inventory", inventoryRoutes);
 
 app.use((req, res) => res.status(404).json({ error: `Route not found: ${req.method} ${req.originalUrl}` }));
 
