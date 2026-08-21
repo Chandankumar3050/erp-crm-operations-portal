@@ -1,73 +1,106 @@
-import { PrismaClient, CustomerType, CustomerStatus } from "@prisma/client";
+import { PrismaClient, Role } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  const password = await bcrypt.hash("Password@123", 10);
-
-  const [admin, sales, warehouse, accounts] = await Promise.all([
-    prisma.user.upsert({
-      where: { email: "admin@erp.test" },
+  const [warehouseA, warehouseB] = await Promise.all([
+    prisma.location.upsert({
+      where: { name: "Warehouse A - Vadodara" },
       update: {},
-      create: { name: "Aditi Admin", email: "admin@erp.test", passwordHash: password, role: "ADMIN" },
+      create: { name: "Warehouse A - Vadodara" },
     }),
-    prisma.user.upsert({
-      where: { email: "sales@erp.test" },
+    prisma.location.upsert({
+      where: { name: "Warehouse B - Ahmedabad" },
       update: {},
-      create: { name: "Sanjay Sales", email: "sales@erp.test", passwordHash: password, role: "SALES" },
-    }),
-    prisma.user.upsert({
-      where: { email: "warehouse@erp.test" },
-      update: {},
-      create: { name: "Waris Warehouse", email: "warehouse@erp.test", passwordHash: password, role: "WAREHOUSE" },
-    }),
-    prisma.user.upsert({
-      where: { email: "accounts@erp.test" },
-      update: {},
-      create: { name: "Anita Accounts", email: "accounts@erp.test", passwordHash: password, role: "ACCOUNTS" },
+      create: { name: "Warehouse B - Ahmedabad" },
     }),
   ]);
 
-  const customer = await prisma.customer.upsert({
-    where: { id: "00000000-0000-0000-0000-000000000001" },
+  const passwordHash = await bcrypt.hash("password123", 10);
+
+  const admin = await prisma.user.upsert({
+    where: { email: "admin@fundsroom.test" },
+    update: {},
+    create: { name: "Admin User", email: "admin@fundsroom.test", passwordHash, role: Role.ADMIN },
+  });
+
+  const opsUser = await prisma.user.upsert({
+    where: { email: "ops@fundsroom.test" },
     update: {},
     create: {
-      id: "00000000-0000-0000-0000-000000000001",
-      name: "Rohit Traders",
-      mobile: "9876543210",
-      email: "rohit@traders.example",
-      businessName: "Rohit Traders Pvt Ltd",
-      customerType: CustomerType.WHOLESALE,
-      address: "MG Road, Ahmedabad",
-      status: CustomerStatus.ACTIVE,
-      createdById: sales.id,
+      name: "Operations User",
+      email: "ops@fundsroom.test",
+      passwordHash,
+      role: Role.OPERATIONS,
+      locationId: warehouseA.id,
     },
   });
 
-  const product = await prisma.product.upsert({
-    where: { sku: "SKU-STEEL-001" },
+  const salesUser = await prisma.user.upsert({
+    where: { email: "sales@fundsroom.test" },
     update: {},
     create: {
-      name: "Steel Rod 12mm",
-      sku: "SKU-STEEL-001",
-      category: "Construction",
-      unitPrice: 650,
-      currentStock: 500,
-      minStockAlert: 50,
-      location: "Warehouse A - Rack 3",
-      createdById: warehouse.id,
+      name: "Sales User",
+      email: "sales@fundsroom.test",
+      passwordHash,
+      role: Role.SALES,
+      locationId: warehouseA.id,
+    },
+  });
+
+  await prisma.inventoryItem.upsert({
+    where: { name_locationId_batch: { name: "Steel Rod 10mm", locationId: warehouseA.id, batch: "BATCH-A1" } },
+    update: {},
+    create: {
+      name: "Steel Rod 10mm",
+      category: "Raw Material",
+      locationId: warehouseA.id,
+      batch: "BATCH-A1",
+      physicalQty: 100,
+      reservedQty: 0,
+    },
+  });
+
+  await prisma.inventoryItem.upsert({
+    where: { name_locationId_batch: { name: "Steel Rod 10mm", locationId: warehouseB.id, batch: "BATCH-B1" } },
+    update: {},
+    create: {
+      name: "Steel Rod 10mm",
+      category: "Raw Material",
+      locationId: warehouseB.id,
+      batch: "BATCH-B1",
+      physicalQty: 80,
+      reservedQty: 0,
+    },
+  });
+
+  await prisma.inventoryItem.upsert({
+    where: { name_locationId_batch: { name: "Copper Wire Spool", locationId: warehouseA.id, batch: "BATCH-CW1" } },
+    update: {},
+    create: {
+      name: "Copper Wire Spool",
+      category: "Raw Material",
+      locationId: warehouseA.id,
+      batch: "BATCH-CW1",
+      physicalQty: 60,
+      reservedQty: 0,
+    },
+  });
+
+  await prisma.workOrder.create({
+    data: {
+      locationId: warehouseA.id,
+      itemName: "Copper Wire Spool",
+      requiredQty: 100,
+      assignedUserId: opsUser.id,
+      status: "ASSIGNED",
     },
   });
 
   console.log("Seed complete.");
-  console.log("Login credentials (all use password: Password@123):");
-  console.log(`  Admin:     admin@erp.test`);
-  console.log(`  Sales:     sales@erp.test`);
-  console.log(`  Warehouse: warehouse@erp.test`);
-  console.log(`  Accounts:  accounts@erp.test`);
-  console.log(`Sample customer: ${customer.name} (${customer.id})`);
-  console.log(`Sample product: ${product.name} (${product.id})`);
+  console.log({ admin: admin.email, opsUser: opsUser.email, salesUser: salesUser.email });
+  console.log("All seeded users share password: password123");
 }
 
 main()
